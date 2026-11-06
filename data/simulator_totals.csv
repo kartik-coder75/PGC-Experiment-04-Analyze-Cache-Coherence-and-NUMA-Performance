@@ -1,0 +1,7 @@
+layout,protocol,bus_transactions,BusRd,BusRdX,BusUpgr,invalidations,writeback,c2c,silent_E_to_M
+adjacent,MSI,4000,2000,0,2000,1999,1999,0,0
+adjacent,MESI,3999,2000,0,1999,1999,1999,0,1
+adjacent,MOESI,3999,2000,0,1999,1999,0,3998,1
+padded,MSI,4,2,0,2,0,0,0,0
+padded,MESI,2,2,0,0,0,0,0,2
+padded,MOESI,2,2,0,0,0,0,0,2

@@ -1,0 +1,77 @@
+Raw terminal output, transcribed from the screenshots in results/screenshots/
+==============================================================================
+
+[01] Setup check (initial VM: 1 NUMA node, 2 vCPUs)
+$ gcc --version
+gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+$ echo '#include <omp.h>' | gcc -E -fopenmp -x c - > /dev/null && echo "OpenMP OK"
+OpenMP OK
+$ numactl --hardware
+available: 1 nodes (0)
+node 0 cpus: 0 1
+node 0 size: 3863 MB
+node 0 free: 852 MB
+node distances:
+node   0
+  0:  10
+$ lscpu -e
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE
+  0    0      0    0 0:0:0:0          yes
+  1    0      1    1 2:2:2:2          yes
+
+[02] python3 coherence_sim.py 1000  -- state trace, first 2 iterations, adjacent layout
+MSI:    core0 R C0=S C1=I | core0 W C0=M C1=I | core1 R C0=S C1=S | core1 W C0=I C1=M
+        core0 R C0=S C1=S | core0 W C0=M C1=I | core1 R C0=S C1=S | core1 W C0=I C1=M
+MESI:   core0 R C0=E C1=I | core0 W C0=M C1=I | core1 R C0=S C1=S | core1 W C0=I C1=M
+        core0 R C0=S C1=S | core0 W C0=M C1=I | core1 R C0=S C1=S | core1 W C0=I C1=M
+MOESI:  core0 R C0=E C1=I | core0 W C0=M C1=I | core1 R C0=O C1=S | core1 W C0=I C1=M
+        core0 R C0=S C1=O | core0 W C0=M C1=I | core1 R C0=O C1=S | core1 W C0=I C1=M
+
+[03] Totals for 1000 iterations
+layout   protocol bus transactions BusRd BusRdX BusUpgr invalidations writeback  c2c silent E->M
+adjacent MSI                  4000  2000      0    2000          1999      1999    0           0
+adjacent MESI                 3999  2000      0    1999          1999      1999    0           1
+adjacent MOESI                3999  2000      0    1999          1999         0 3998           1
+padded   MSI                     4     2      0       2             0         0    0           0
+padded   MESI                    2     2      0       0             0         0    0           2
+padded   MOESI                   2     2      0       0             0         0    0           2
+
+[04] Program 2 (false_sharing), 2 threads
+adjacent | threads=2 | total=100000000 | time=0.0185 s
+padded   | threads=2 | total=100000000 | time=0.0151 s
+
+[05] Program 3 on the 1-node VM
+$ OMP_NUM_THREADS=2 numactl --cpunodebind=0 --membind=0 ./numa_sweep
+buffer=512 MB | threads=2 | sum=33554432 | time=0.0961 s
+$ OMP_NUM_THREADS=2 numactl --cpunodebind=0 --membind=1 ./numa_sweep
+libnuma: Warning: node argument 1 is out of range
+<1> is invalid        (numactl printed its usage text; nothing was run)
+
+[06] After enabling virtual NUMA in the .vmx file (2 nodes)
+$ numactl --hardware
+available: 2 nodes (0-1)
+node 0 cpus: 0 1   | size: 1966 MB | free: 871 MB
+node 1 cpus: 2 3   | size: 1950 MB | free: 695 MB
+node distances:  0->0 10, 0->1 20, 1->0 20, 1->1 10
+$ OMP_NUM_THREADS=2 numactl --cpunodebind=0 --membind=0 ./numa_sweep
+buffer=512 MB | threads=2 | sum=33554432 | time=0.0977 s
+$ OMP_NUM_THREADS=2 numactl --cpunodebind=0 --membind=1 ./numa_sweep
+buffer=512 MB | threads=2 | sum=33554432 | time=0.0978 s
+
+[07] ./compare_numa  (default placement)
+adjacent | 1 | 100000000 | Correct | 0.0225      padded | 1 | ... | 0.0219
+adjacent | 2 | 100000000 | Correct | 0.0147      padded | 2 | ... | 0.0110
+adjacent | 4 | 100000000 | Correct | 0.0095      padded | 4 | ... | 0.0074
+Table 2:  1 thread 0.1072 s | 2 threads 0.1010 s
+
+[08a] numactl --cpunodebind=0 --membind=0 ./compare_numa   (local)
+adjacent | 1 | 0.0241   padded | 1 | 0.0235
+adjacent | 2 | 0.0147   padded | 2 | 0.0139
+adjacent | 4 | 0.0154   padded | 4 | 0.0121
+Table 2:  1 thread 0.1075 s | 2 threads 0.1056 s
+
+[08b] numactl --cpunodebind=0 --membind=1 ./compare_numa   (remote)
+adjacent | 1 | 0.0228   padded | 1 | 0.0206
+adjacent | 2 | 0.0149   padded | 2 | 0.0114
+adjacent | 4 | 0.0145   padded | 4 | 0.0125
+Table 2:  1 thread 0.1065 s | 2 threads 0.0995 s

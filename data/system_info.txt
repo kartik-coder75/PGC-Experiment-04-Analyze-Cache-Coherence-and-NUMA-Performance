@@ -1,0 +1,17 @@
+Experiment environment (from terminal screenshots)
+---------------------------------------------------
+Host virtualisation : VMware Workstation Pro, guest hostname kartik-VMware-Virtual-Platform
+Guest OS            : Ubuntu 24.04 (gcc package 13.3.0-6ubuntu2~24.04.1; manual specified 22.04)
+Compiler            : gcc 13.3.0, OpenMP OK (libgomp)
+
+Initial VM (first screenshot)
+  numactl --hardware : 1 node (node 0), cpus 0 1, size 3863 MB, distance 10
+  lscpu -e           : 2 vCPUs, 2 sockets x 1 core, 1 NUMA node
+  Result             : numactl --membind=1 rejected ("node argument 1 is out of range")
+
+Reconfigured VM (.vmx virtual NUMA settings applied)
+  numactl --hardware : 2 nodes (0-1)
+  node 0 : cpus 0 1, size 1966 MB, free 871 MB
+  node 1 : cpus 2 3, size 1950 MB, free 695 MB
+  node distances     : 0->0 = 10, 0->1 = 20, 1->0 = 20, 1->1 = 10
+  Total              : 4 vCPUs, ~3.9 GB RAM
