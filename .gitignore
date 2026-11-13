@@ -1,0 +1,6 @@
+# compiled binaries
+src/false_sharing
+src/numa_sweep
+src/compare_numa
+__pycache__/
+*.pyc
