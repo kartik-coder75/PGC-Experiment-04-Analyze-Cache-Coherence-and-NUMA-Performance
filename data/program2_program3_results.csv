@@ -1,0 +1,6 @@
+program,configuration,threads,time_s,note
+Program 2,adjacent,2,0.0185,total=100000000
+Program 2,padded,2,0.0151,total=100000000
+Program 3,local (cpunodebind=0 membind=0) - 1 NUMA node VM,2,0.0961,sum=33554432 (VM exposed only 1 node; membind=1 rejected)
+Program 3,local (cpunodebind=0 membind=0) - 2 NUMA node VM,2,0.0977,sum=33554432
+Program 3,remote (cpunodebind=0 membind=1) - 2 NUMA node VM,2,0.0978,sum=33554432

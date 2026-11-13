@@ -1,0 +1,7 @@
+placement,threads,time_s
+default,1,0.1072
+default,2,0.1010
+local,1,0.1075
+local,2,0.1056
+remote,1,0.1065
+remote,2,0.0995
